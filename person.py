@@ -4,9 +4,6 @@ import os
 import comtypes.client
 import jieba
 import re
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
-import json
 import json
 from flask import Flask,request
 from flask_cors import CORS
@@ -66,8 +63,6 @@ def ExtractInfo(text):
     输入简历文本内容，返回个人信息，存入字典 personalDict
     '''
     personalDict = {}
-
-
 
     ex = extractor()
     personalDict["name"] = ex.extract_name(text)
@@ -136,7 +131,6 @@ def ExtractInfo(text):
                 personalDict['skill'] = skillCut
                 break
 
-
     return personalDict
 
 def stopwordslist():
@@ -161,27 +155,11 @@ def extractSkills(skillLines):
 
     return skillStr
 
-def kmeansClassify(pos):
-    def jieba_tokenize(txt):
-        return jieba.lcut(txt)
-
-    tfidf_vec = TfidfVectorizer(tokenizer=jieba_tokenize, lowercase=False)
-    # print('tf idf vec: ', tfidf_vec)
-    tfidf_matrix = tfidf_vec.fit_transform(pos)
-    # print('tf idf matrix: ', tfidf_matrix)
-    cluster = 3
-    km = KMeans(n_clusters=cluster, max_iter=100, n_init=1, init='k-means++', n_jobs=1)
-    result = km.fit_predict(tfidf_matrix)
-
-    # print(result)
-    return result
-
 def fromCV2json():
     '''
     读取文件、获取信息、返回json
     '''
     cvList = getCVPathList()
-    # cvList = [r"E:\003\joinUs\resume\计算机研究所 5.21\B-王迷涛-10-18-一本-会展经济与管理-1年V（5）.pdf"]
 
     personList = []
     for cv in cvList:
@@ -191,11 +169,7 @@ def fromCV2json():
             print(personalInfo)
             personList.append(personalInfo)
 
-    # personDict = {'person':personList}
-    # personDict = json.dumps(personDict, ensure_ascii=False, indent=4)
-
     return personList
-
 
 @app.route('/analyzeInterviewer', methods=['GET'])
 def personInfo():
@@ -204,30 +178,12 @@ def personInfo():
         print(cvTxt)
     except Exception as e:
         print(e)
-    # personDict = fromCV2json()
-    # return personDict
     return 'hello '
 
 if __name__ == "__main__":
     cvList = getCVPathList()
-    # cvList = [r"E:\003\joinUs\resume\计算机研究所 5.21\B-王迷涛-10-18-一本-会展经济与管理-1年V（5）.pdf"]
     # cvTxt = ProcessInput(cvList[0])
     # print(cvTxt)
-
-    for c in cvList:
-        cvTxt = ProcessInput(c)
-        if cvTxt is not None:
-            personalInfo = GetIntervieweeInfo.ExtractInfo(cvTxt)
-            url = 'http://192.168.13.20:3000/users/register_interviewer'
-            try:
-                r = requests.post(url, data=personalInfo)
-                print(r.text)
-            except:
-                print('Requests Error in ', c, '\n', personalInfo)
-
-    # personDict = fromCV2json()
-    # print(personDict)
-    # print(type(personDict))
 
     # app.run(host='192.168.13.16',debug=True)
     # app.run(debug=True)
