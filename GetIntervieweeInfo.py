@@ -8,23 +8,13 @@ import pdfplumber
 stopwordsPath = os.path.join(os.getcwd(), 'stopwords.txt')
 termsPath = os.path.join(os.getcwd(), 'terms.txt')
 
-
 def ProcessInput(filename):
     '''
     输入简历路径，返回简历文本内容，存入 txt
     '''
-    # "E:\\003\\cocoNLP-master\\计算机所 Java和大数据 5.9\\Java\\J-刘俊良-07-19-三本-软件工程.pdf"
     if '.doc' in filename:
         # word转pdf
         return None
-        word = comtypes.client.CreateObject('Word.Application')
-        doc = word.Documents.Open(filename, ReadOnly=1)  # 目标路径下的文件
-        filename =os.path.splitext(filename)[-2] + '.pdf'
-        doc.SaveAs(filename, FileFormat=17)
-        doc.Close()
-        word.Quit()
-        print('hahaha')
-
     try:
         with pdfplumber.open(filename) as pdf:
             txt = ''
