@@ -1,9 +1,10 @@
-from cocoNLP.extractor import extractor
+# from cocoNLP.extractor import extractor
 import os
 import jieba
 import re
 import pdfplumber
-
+from main import *
+import logging
 # 文件路径设置
 stopwordsPath = os.path.join(os.getcwd(), 'stopwords.txt')
 termsPath = os.path.join(os.getcwd(), 'terms.txt')
@@ -21,6 +22,7 @@ def ProcessInput(filename):
             for page in pdf.pages:
                 txt += page.extract_text().strip()
     except Exception as e:
+        logging(e)
         print('There is an error during process input file : ', e )
         print('The input file name is ', filename)
         return None
@@ -32,20 +34,23 @@ def ExtractInfo(text):
     输入简历文本内容，返回个人信息，存入字典 personalDict
     '''
     personalDict = {}
-    ex = extractor()
+    # ex = extractor()
 
     # 抽取姓名
-    personalDict["name"] = ex.extract_name(text)
+    personalDict["name"] = extractName(text)
+
+    # 抽取学校
+    personalDict["uni"] = extractUni(text)
 
     # 抽取手机号
-    cellphones = ex.extract_cellphone(text, nation='CHN')
-    if cellphones:
-        personalDict["cellphone"] = [i.strip() for i in cellphones][0]
-    else:
-        cellPattern = re.compile('1[0-9]{10}')
-        cellphone = cellPattern.findall(text)
-        personalDict['cellphone'] = cellphone[0]
-    personalDict['id'] = personalDict['cellphone']
+    # cellphones = ex.extract_cellphone(text, nation='CHN')
+    # if cellphones:
+    #     personalDict["cellphone"] = [i.strip() for i in cellphones][0]
+    # else:
+    #     cellPattern = re.compile('1[0-9]{10}')
+    #     cellphone = cellPattern.findall(text)
+    #     personalDict['cellphone'] = cellphone[0]
+    # personalDict['id'] = personalDict['cellphone']
 
     # 抽取邮箱
     mailPattern = re.compile(r"(\w+@\w+\.\w+)")
@@ -118,3 +123,56 @@ def extractSkills(skillLines):
     skillStr += outstr
 
     return skillStr
+
+def extractName(txt):
+    # 提取人名
+    extractName = ' '.join(txt.split()[:10])
+    nameEntity = extractEntity(extractName)['per']
+    # print('name:  ',nameEntity)
+    if nameEntity:
+        return nameEntity[0]
+
+def extractUni(txt):
+    UniEntity = extractEntity(txt)['org']
+    for i in UniEntity:
+        i = i.replace('\n', '')
+        if ('大学' == i[-2:] )or ('学院'  == i[-2:]):
+            # print('----- ',i)
+            return i
+    return 'null'
+
+# def logging(e):
+#     # 第一步，创建一个logger
+#     logger = logging.getLogger("__abc__")
+#     logger.setLevel(level=logging.DEBUG)  # Log等级开关
+#
+#     # 第二步，创建一个handler，用于写入日志文件
+#     log_path = os.path.dirname(os.getcwd()) + '/tmp/'
+#     log_name = log_path + 'log.txt'
+#     logfile = log_name
+#     file_handler = logging.FileHandler(logfile, mode='a+')
+#     file_handler.setLevel(logging.ERROR)  # 输出到file的log等级的开关
+#
+#     # 第三步，定义handler的输出格式
+#     formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")
+#     file_handler.setFormatter(formatter)
+#
+#     # 第四步，将handler添加到logger里面
+#     logger.addHandler(file_handler)
+#     logger.exception(msg=e)
+
+
+if __name__ == "__main__":
+    # pass
+    namelist = ['1559561708000_ykbktjvoijlooyyl','1559560749000_fwpgjoysyhiqcmzh','1559561896000_xitzjhrxcxtwriwk','1559562681000_hmeyaluwemjloegu']
+    personlist = []
+    for n in namelist:
+        filename = "C:/Users/Datoo/Desktop/简历/%s.pdf" % n
+        txt = ProcessInput(filename)
+        personDict = ExtractInfo(txt)
+        personlist.append(personDict)
+    # print(txt)
+    # print('--------------------')
+    # print(txt.split()[:10])
+
+    print(personlist)
