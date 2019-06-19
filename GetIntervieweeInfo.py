@@ -3,10 +3,12 @@ import os
 import jieba
 import re
 import pdfplumber
+from main import extractEntity
 
 # 文件路径设置
 stopwordsPath = os.path.join(os.getcwd(), 'stopwords.txt')
 termsPath = os.path.join(os.getcwd(), 'terms.txt')
+skillPath = os.path.join(os.getcwd(), 'skills.txt')
 
 def ProcessInput(filename):
     '''
@@ -28,14 +30,20 @@ def ProcessInput(filename):
     return txt
 
 def ExtractInfo(text):
+
     '''
     输入简历文本内容，返回个人信息，存入字典 personalDict
     '''
     personalDict = {}
     ex = extractor()
 
+    extract_name_uni = extractEntity(text)
+
     # 抽取姓名
-    personalDict["name"] = ex.extract_name(text)
+    personalDict["name"] = extract_name_uni['per']
+
+    # # 抽取学校
+    personalDict["uni"] = extract_name_uni['org']
 
     # 抽取手机号
     cellphones = ex.extract_cellphone(text, nation='CHN')
@@ -51,6 +59,10 @@ def ExtractInfo(text):
     mailPattern = re.compile(r"(\w+@\w+\.\w+)")
     mail = mailPattern.findall(text)
     personalDict['mail'] = mail[0]
+
+    # 抽取技能
+    skillCut = extractSkills(text)
+    personalDict['skill'] = skillCut
 
     txtList = text.split('\n')
     for i in range(len(txtList)):
@@ -69,7 +81,7 @@ def ExtractInfo(text):
                     break
 
         # 抽取学历
-        eduPattern = re.compile('学[\s\S]*?历[;：]([\S\s]{0,6})')
+        eduPattern = re.compile('学[\s\S]*?历[;：]([\S]{0,6})\s')
         edu = eduPattern.findall(txtList[i])
         if edu:
             personalDict['edu'] = edu[0].strip()
@@ -85,16 +97,6 @@ def ExtractInfo(text):
                 if age:
                     personalDict['age'] = age[0]
 
-        # 抽取技能
-        skillKw = ['个人技能','专业技能','知识技能','职业技能','I T 技能']
-        for s in skillKw:
-            if s in line:
-                skillList = [t.strip() for t in txtList[i+1:i+10] if t != ' ']
-                skillStr = ' '.join(skillList)
-                skillCut = extractSkills(skillStr)
-                personalDict['skill'] = skillCut
-                break
-
     return personalDict
 
 def stopwordslist():
@@ -102,19 +104,22 @@ def stopwordslist():
     stopwords = [line.strip() for line in open(stopWordsFile, 'r', encoding='utf-8').readlines()]
     return stopwords
 
-def extractSkills(skillLines):
+def skillslist():
+    skillwords = [line.strip() for line in open(skillPath, 'r', encoding='utf-8').readlines()]
+    return skillwords
+
+def extractSkills(text):
     '''
     单独处理‘个人技能’中的关键词
     '''
-    stopwords = stopwordslist()
-    jieba.load_userdict(termsPath)
-    skillStr = ''
-    cut = jieba.cut(skillLines)
-    outstr = ''
+    skillwords = skillslist()
+    cut = jieba.cut(text)
+    outstr = []
     for word in cut:
-        if word not in stopwords and word != ' ':
-            outstr += word
-            outstr += "/ "
-    skillStr += outstr
+        if word in skillwords:
+            outstr.append(word)
+    outstr = set(outstr)
+    return '/ '.join(outstr)
 
-    return skillStr
+if __name__ == "__main__":
+    pass
