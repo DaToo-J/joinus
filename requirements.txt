@@ -1,5 +1,5 @@
 Flask==1.0.3
-Flask-Cors==3.0.7
+Flask-Cors==3.0.9
 Werkzeug==0.15.4
 pdfplumber==0.5.12
 regex==2019.4.14
